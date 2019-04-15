@@ -8,7 +8,7 @@ See [SimpleTopicTest.java](src/test/java/com/github/jukkakarvanen/kafka/streams/
 
 
 ## Example how to simply code:
-[https://github.com/jukkakarvanen/kafka-streams-examples/blob/InputOutputTopic/src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java]
+[New versions](https://github.com/jukkakarvanen/kafka-streams-examples/blob/InputOutputTopic/src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java)
 
-
+[Difference with original](https://github.com/jukkakarvanen/kafka-streams-examples/compare/TopologyTestDriver_tests...jukkakarvanen:InputOutputTopic#diff-eb92f3ffdd1c19905ffeba20a254eafc)
 
