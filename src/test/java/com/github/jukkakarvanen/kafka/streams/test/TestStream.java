@@ -17,19 +17,20 @@ package com.github.jukkakarvanen.kafka.streams.test;
 
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+
+import java.util.Properties;
+
 import static org.apache.kafka.common.utils.Utils.mkEntry;
 import static org.apache.kafka.common.utils.Utils.mkMap;
 import static org.apache.kafka.common.utils.Utils.mkProperties;
 
-import java.util.Properties;
-
 /**
- * Simple Test Stream Skeleton
+ * Simple Test Stream Skeleton for tests
  * @author Jukka Karvanen / jukinimi.com
  */
 class TestStream {
     final static String INPUT_TOPIC = "input";
-    final static String OUTPUT_TOPIC="output";
+    final static String OUTPUT_TOPIC = "output";
 
     final Properties config = mkProperties(mkMap(
             mkEntry(StreamsConfig.APPLICATION_ID_CONFIG, "TestInputOutputTopicTest"),
@@ -37,7 +38,7 @@ class TestStream {
     ));
 
     void createStream(final StreamsBuilder builder) {
-      builder.stream(INPUT_TOPIC).to(OUTPUT_TOPIC);
+        builder.stream(INPUT_TOPIC).to(OUTPUT_TOPIC);
     }
 
-  }
+}

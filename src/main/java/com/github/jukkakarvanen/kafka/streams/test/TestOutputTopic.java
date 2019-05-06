@@ -20,41 +20,39 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.test.ConsumerRecordFactory;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
+ * TestOutputTopic is used to read records from topic in {@link TopologyTestDriver}.
  * This class makes it easier to write tests with {@link TopologyTestDriver}.
- * To use {@code TestOutputTopic} create new class with topicName and correct Serdes or Deserealizers
+ * To use {@code TestOutputTopic} create new class with topicName and correct Serdes or Deserializers
  * In actual test code, you can read message values, keys, {@link KeyValue} or {@link ProducerRecord}
- * without needing to care serdes. You need to have own TestOutputTopic for each topic.
+ * without needing to pass serdes each time You need to have own TestOutputTopic for each topic.
+ * <p>
+ * If you need to test key, value and headers, use {@link #readRecord()} methods.
+ * Using {@link #readKeyValue()} you get directly KeyValue, but have no access to headers any more
+ * Using {@link #readValue()} you get directly value, but have no access to key or  headers any more
  *
- * If you need to test key, value and headers, use @{link #readRecord} methods.
- * Using @{link #readKeyValue} you get directly KeyValue, but have no access to headers any more
- * Using @{link #readValue} and @{link #readKey} you get directly Key or Value, but have no access to headers any more
- * Note, if using @{link #readKey} and @{link #readValue} in sequence, you get the key of first record and value of the next one
- *
- * <h2>Processing messages</h2>*
+ * <h2>Processing messages</h2>
  * <pre>{@code
- *      private TestOutputTopic<String, Long> outputTopic;
- * -@Before
+ *     private TestOutputTopic<String, Long> outputTopic;
  *      ...
- *     outputTopic = new TestOutputTopic<String, Long>(testDriver, outputTopic, new Serdes.StringSerde(), new Serdes.LongSerde());
- *
- * -@Test
+ *     outputTopic = new TestOutputTopic<>(testDriver, outputTopic, new Serdes.StringSerde(), new Serdes.LongSerde());
  *     ...
  *     assertThat(outputTopic.readValue()).isEqual(1);
- * </pre>
+ * }</pre>
  *
+ * @param <K> the type of the Kafka key
+ * @param <V> the type of the Kafka value
+ * @see TopologyTestDriver
+ * @see ConsumerRecordFactory
  * @author Jukka Karvanen / jukinimi.com
- *
- * @param <K> the type of the key
- * @param <V> the type of the value
- *
- * @see TopologyTestDriver, ConsumerRecordFactory
  */
 public class TestOutputTopic<K, V> {
     //Possibility to use in subclasses
@@ -67,21 +65,39 @@ public class TestOutputTopic<K, V> {
     @SuppressWarnings({"WeakerAccess"})
     protected final Deserializer<V> valueDeserializer;
 
+    /**
+     * Create a test output topic to read messages from
+     *
+     * @param driver     TopologyTestDriver to use
+     * @param topicName  the topic name used
+     * @param keySerde   the key deserializer
+     * @param valueSerde the value deserializer
+     */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public TestOutputTopic(final TopologyTestDriver driver,
-                           final String topic,
+                           final String topicName,
                            final Serde<K> keySerde,
                            final Serde<V> valueSerde) {
-        this(driver, topic, keySerde.deserializer(), valueSerde.deserializer());
+        this(driver, topicName, keySerde.deserializer(), valueSerde.deserializer());
     }
 
+    /**
+     * Create a test output topic to read messages from
+     *
+     * @param driver            TopologyTestDriver to use
+     * @param topicName         the topic name used
+     * @param keyDeserializer   the key deserializer
+     * @param valueDeserializer the value deserializer
+     */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public TestOutputTopic(final TopologyTestDriver driver,
-                           final String topic,
+                           final String topicName,
                            final Deserializer<K> keyDeserializer,
                            final Deserializer<V> valueDeserializer) {
+        Objects.requireNonNull(driver, "TopologyTestDriver cannot be null");
+        Objects.requireNonNull(topicName, "topicName cannot be null");
         this.driver = driver;
-        this.topic = topic;
+        this.topic = topicName;
         this.keyDeserializer = keyDeserializer;
         this.valueDeserializer = valueDeserializer;
     }
@@ -102,23 +118,9 @@ public class TestOutputTopic<K, V> {
     }
 
     /**
-     * Read one Record from output topic and and return key only.
-     * <p>
-     * Note. The value and header is not available
+     * Read one Record KeyValue from output topic.
      *
-     * @return Next output as ProducerRecord
-     */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public K readKey() {
-        ProducerRecord<K, V> record = readRecord();
-        if (record == null) return null;
-        return record.key();
-    }
-
-    /**
-     * Read one Record from output topic.
-     *
-     * @return Next output as ProducerRecord
+     * @return Next output as KeyValue
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public KeyValue<K, V> readKeyValue() {
@@ -139,12 +141,12 @@ public class TestOutputTopic<K, V> {
 
     /**
      * Read output to map.
-     * If the existing key is modified, it can appear twice in output and is replaced in map
+     * If the existing key is modified, it can appear twice in output, but replaced in map
      *
      * @return Map of output by key
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
-    public Map<K, V> readRecordsToMap() {
+    public Map<K, V> readKeyValuesToMap() {
         final Map<K, V> output = new HashMap<>();
         ProducerRecord<K, V> outputRow;
         while ((outputRow = readRecord()) != null) {
@@ -154,18 +156,37 @@ public class TestOutputTopic<K, V> {
     }
 
     /**
-     * Read output to map.
-     * If the existing key is modified, it can appear twice in output and is replaced in map
+     * Read all KeyValues from topic to List.
      *
-     * @return Map of output by key
+     * @return List of output KeyValues
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
-    public List<KeyValue<K, V>> readRecordsToList() {
+    public List<KeyValue<K, V>> readKeyValuesToList() {
         final List<KeyValue<K, V>> output = new LinkedList<>();
         KeyValue<K, V> outputRow;
         while ((outputRow = readKeyValue()) != null) {
             output.add(outputRow);
         }
         return output;
+    }
+
+    /**
+     * Read all values from topic to List.
+     *
+     * @return List of output values
+     */
+    @SuppressWarnings({"WeakerAccess", "unused"})
+    public List<V> readValuesToList() {
+        final List<V> output = new LinkedList<>();
+        V outputValue;
+        while ((outputValue = readValue()) != null) {
+            output.add(outputValue);
+        }
+        return output;
+    }
+
+    @Override
+    public String toString() {
+        return "TestOutputTopic{topic='" + topic + "'}";
     }
 }
