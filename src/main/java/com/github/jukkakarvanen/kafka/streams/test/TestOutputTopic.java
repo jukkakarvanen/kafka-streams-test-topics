@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class TestOutputTopic<K, V> {
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public V readValue() {
-        ProducerRecord<K, V> record = readRecord();
+        final ProducerRecord<K, V> record = readRecord();
         if (record == null) return null;
         return record.value();
     }
@@ -124,7 +124,7 @@ public class TestOutputTopic<K, V> {
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public KeyValue<K, V> readKeyValue() {
-        ProducerRecord<K, V> record = readRecord();
+        final ProducerRecord<K, V> record = readRecord();
         if (record == null) return null;
         return new KeyValue<>(record.key(), record.value());
     }
