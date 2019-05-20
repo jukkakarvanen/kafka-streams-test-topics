@@ -39,7 +39,7 @@ import static org.junit.Assert.assertNull;
 /**
  * Unit test of {@link SimpleStreamApp} stream using TopologyTestDriver.
  */
-public class SimpleStramAppTest {
+public class SimpleStreamAppTest {
 
     private TopologyTestDriver testDriver;
     private TestInputTopic<String, String> inputTopic;
