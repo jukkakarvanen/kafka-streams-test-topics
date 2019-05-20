@@ -23,6 +23,10 @@ These classes are proposed as improvements to main Apache Kafka project kafka-st
  This way even the project is compiled using Kafka 2.2.0. You can use this also with any version of Kafka 1.1.0 and later.
  Only calls to pipeInput methods with Headers object (inputTopic.pipeInput(1L, "Hello", headers);) are failing, if used with with prior 2.0.0 version where header support was added.
 
+There is a new [KIP-470](https://cwiki.apache.org/confluence/display/KAFKA/KIP-470%3A+TopologyTestDriver+test+input+and+output+usability+improvements) which contain the same classes
+with little modifications. Migration from these classes also to KIP-470 should be rather straightforward operation. 
+
+
 # Documentation        
 
 See [JavaDoc](https://jukkakarvanen.github.io/kafka-streams-test-topics/)        
