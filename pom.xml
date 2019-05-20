@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>Kafka Streams Test Topics</name>
-    <description>Addition to kafka-streams-test-utils to be used with older Kafka versions not containuing KIP-456
+    <description>Addition to kafka-streams-test-utils to be used with older Kafka versions not containing KIP-456
     </description>
     <url>https://github.com/jukkakarvanen/kafka-streams-test-topics</url>
 
