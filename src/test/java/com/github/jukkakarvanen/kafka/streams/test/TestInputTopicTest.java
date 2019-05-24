@@ -31,9 +31,9 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.test.OutputVerifier;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -44,7 +44,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit Test of TestInputTopic
@@ -64,7 +64,7 @@ public class TestInputTopicTest {
     private final StringDeserializer stringDeserializer = new StringDeserializer();
     private final StringSerializer stringSerializer = new StringSerializer();
 
-    @Before
+    @BeforeEach
     public void setup() {
         final StreamsBuilder builder = new StreamsBuilder();
         TestStream app = new TestStream();
@@ -76,7 +76,7 @@ public class TestInputTopicTest {
         testDriver = new TopologyTestDriver(builder.build(), app.config);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         try {
             testDriver.close();
@@ -225,24 +225,27 @@ public class TestInputTopicTest {
     @Test
     public void testNonExistingTopic() {
         final TestInputTopic<Long, String> inputTopic = new TestInputTopic<>(testDriver, "no-exist", longSerde, stringSerde);
-        assertThrows("Unknown topic", IllegalArgumentException.class, () -> inputTopic.pipeInput(1L, "Hello"));
+        assertThrows(IllegalArgumentException.class, () -> inputTopic.pipeInput(1L, "Hello"));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void shouldNotAllowToCreateTopicWithNullTopicName() {
-        final TestInputTopic<String, String> inputTopic = new TestInputTopic<>(testDriver, null, stringSerde, stringSerde);
+        assertThrows(NullPointerException.class, () ->
+            new TestInputTopic<>(testDriver, null, stringSerde, stringSerde)
+        );
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void shouldNotAllowToCreateWithNullDriver() {
-        final TestInputTopic<String, String> inputTopic = new TestInputTopic<>(null, INPUT_TOPIC, stringSerde, stringSerde);
+        assertThrows(NullPointerException.class, () ->
+                new TestInputTopic<>(null, INPUT_TOPIC, stringSerde, stringSerde)
+        );
     }
 
-
-    @Test(expected = StreamsException.class)
+    @Test
     public void testWrongSerde() {
         final TestInputTopic<String, String> inputTopic = new TestInputTopic<>(testDriver, INPUT_TOPIC_MAP, stringSerde, stringSerde);
-        inputTopic.pipeInput("1L", "Hello");
+        assertThrows(StreamsException.class, () -> inputTopic.pipeInput("1L", "Hello"));
     }
 
     @Test

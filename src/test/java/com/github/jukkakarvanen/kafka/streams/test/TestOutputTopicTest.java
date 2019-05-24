@@ -26,9 +26,9 @@ import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +41,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit Test of TestOutputTopic
@@ -61,7 +62,7 @@ public class TestOutputTopicTest {
     private final StringDeserializer stringDeserializer = new StringDeserializer();
     private final StringSerializer stringSerializer = new StringSerializer();
 
-    @Before
+    @BeforeEach
     public void setup() {
         final StreamsBuilder builder = new StreamsBuilder();
         TestStream app = new TestStream();
@@ -73,7 +74,7 @@ public class TestOutputTopicTest {
         testDriver = new TopologyTestDriver(builder.build(), app.config);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         try {
             testDriver.close();
@@ -173,22 +174,28 @@ public class TestOutputTopicTest {
         //I was expecting this to throw an error, but returning now only null
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void shouldNotAllowToCreateTopicWithNullTopicName() {
-        final TestOutputTopic<String, String> outputTopic = new TestOutputTopic<>(testDriver, null, stringSerde, stringSerde);
+        assertThrows(NullPointerException.class, () ->
+          new TestOutputTopic<>(testDriver, null, stringSerde, stringSerde)
+        );
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void shouldNotAllowToCreateWithNullDriver() {
-        final TestOutputTopic<String, String> outputTopic = new TestOutputTopic<>(null, OUTPUT_TOPIC, stringSerde, stringSerde);
+        assertThrows(NullPointerException.class, () ->
+            new TestOutputTopic<>(null, OUTPUT_TOPIC, stringSerde, stringSerde)
+        );
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testWrongSerde() {
         final TestInputTopic<Long, String> inputTopic = new TestInputTopic<>(testDriver, INPUT_TOPIC_MAP, longSerde, stringSerde);
         final TestOutputTopic<Long, String> outputTopic = new TestOutputTopic<>(testDriver, OUTPUT_TOPIC_MAP, longSerde, stringSerde);
         inputTopic.pipeInput(1L, "Hello");
-        assertThat(outputTopic.readKeyValue(), equalTo(new KeyValue<>(1L, "Hello")));
+        assertThrows(SerializationException.class, () ->
+                outputTopic.readKeyValue()
+        );
     }
 
     @Test

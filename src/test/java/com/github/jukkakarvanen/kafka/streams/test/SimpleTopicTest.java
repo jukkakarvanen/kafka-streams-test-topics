@@ -18,9 +18,10 @@ package com.github.jukkakarvanen.kafka.streams.test;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.TopologyTestDriver;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,7 @@ public class SimpleTopicTest {
     private TestInputTopic<String, String> inputTopic;
     private TestOutputTopic<String, String> outputTopic;
 
-    @Before
+    @BeforeEach
     public void setup() {
         final StreamsBuilder builder = new StreamsBuilder();
         TestStream app = new TestStream();
@@ -51,7 +52,7 @@ public class SimpleTopicTest {
         outputTopic = new TestOutputTopic<>(testDriver, TestStream.OUTPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         try {
             testDriver.close();
