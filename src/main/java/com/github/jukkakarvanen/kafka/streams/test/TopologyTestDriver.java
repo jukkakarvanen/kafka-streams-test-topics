@@ -87,10 +87,10 @@ import java.util.Queue;
  * This test driver simulates single-partitioned input topics.
  * Here's an example of an input message on the topic named {@code input-topic}:
  *
- * <pre>
+ * <pre>{@code
  * TestInputTopic<String, String> inputTopic = driver.createInputTopic("input-topic", stringSerde, stringSerde);
  * inputTopic.pipeInput("key1", "value1");
- * </pre>
+ * }</pre>
  *
  * When {@link TestInputTopic#pipeInput(Object, Object)} is called, the driver passes the input message through to the appropriate source that
  * consumes the named topic, and will invoke the processor(s) downstream of the source.
