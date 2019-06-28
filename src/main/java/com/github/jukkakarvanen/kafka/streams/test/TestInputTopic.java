@@ -19,26 +19,26 @@ import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.TopologyTestDriver;
-import org.apache.kafka.streams.test.ConsumerRecordFactory;
 
+
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * TestInputTopic is used to pipe records to topic in {@link TopologyTestDriver}.
- * This class combines functionality of {@link TopologyTestDriver} and {@link ConsumerRecordFactory}.
- * To use {@code TestInputTopic} create new class with topicName and correct Serdes or Serializers
+ * To use {@code TestInputTopic} create new class {@link TopologyTestDriver#createInputTopic(String, Serde, Serde)}
  * In actual test code, you can pipe new message values, keys and values or list of {@link KeyValue}
- * without needing to pass serdes each time. You need to have own TestInputTopic object for each topic.
+ * You need to have own TestInputTopic object for each topic.
  *
  *
  * <h2>Processing messages</h2>
  * <pre>{@code
- *     private TestInputTopic<String, String> inputTopic;
+ *     private TestInputTopic<Long, String> inputTopic;
  *     ...
- *     inputTopic = new TestInputTopic<>(testDriver, inputTopic, new Serdes.StringSerde(), new Serdes.StringSerde());
+ *     inputTopic = testDriver.createInputTopic(INPUT_TOPIC, longSerde, stringSerde);
  *     ...
  *     inputTopic.pipeInput("Hello");
  * }</pre>
@@ -46,76 +46,18 @@ import java.util.stream.Collectors;
  * @param <K> the type of the Kafka key
  * @param <V> the type of the Kafka value
  * @see TopologyTestDriver
- * @see ConsumerRecordFactory
  * @author Jukka Karvanen / jukinimi.com
  */
 
 public class TestInputTopic<K, V> {
-    //Possibility to use in subclasses
-    @SuppressWarnings({"WeakerAccess"})
-    protected final TopologyTestDriver driver;
-    @SuppressWarnings({"WeakerAccess"})
-    protected final ConsumerRecordFactory<K, V> factory;
-    @SuppressWarnings({"WeakerAccess"})
-    protected final String topic;
+    private final TopologyTestDriver driver;
+    private final String topic;
+    private final Serializer<K> keySerializer;
+    private final Serializer<V> valueSerializer;
 
-
-    /**
-     * Create a test input topic to pipe messages in.
-     * Uses current system time as start timestamp.
-     * Auto-advance is disabled.
-     *
-     * @param driver          TopologyTestDriver to use
-     * @param topicName       the topic name used
-     * @param keySerializer   the key serializer
-     * @param valueSerializer the value serializer
-     */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public TestInputTopic(final TopologyTestDriver driver,
-                          final String topicName,
-                          final Serializer<K> keySerializer,
-                          final Serializer<V> valueSerializer) {
-        this(driver, topicName, new ConsumerRecordFactory<>(topicName, keySerializer, valueSerializer));
-    }
-
-    /**
-     * Create a test input topic to pipe messages in.
-     * Auto-advance is disabled.
-     *
-     * @param driver           TopologyTestDriver to use
-     * @param topicName        the topic name used
-     * @param keySerializer    the key serializer
-     * @param valueSerializer  the value serializer
-     * @param startTimestampMs the initial timestamp for generated records
-     */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public TestInputTopic(final TopologyTestDriver driver,
-                          final String topicName,
-                          final Serializer<K> keySerializer,
-                          final Serializer<V> valueSerializer,
-                          final long startTimestampMs) {
-        this(driver, topicName, new ConsumerRecordFactory<>(topicName, keySerializer, valueSerializer, startTimestampMs));
-    }
-
-    /**
-     * Create a test input topic to pipe messages in.
-     *
-     * @param driver           TopologyTestDriver to use
-     * @param topicName        the topic name used
-     * @param keySerializer    the key serializer
-     * @param valueSerializer  the value serializer
-     * @param startTimestampMs the initial timestamp for generated records
-     * @param autoAdvanceMs    the time increment per generated record
-     */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public TestInputTopic(final TopologyTestDriver driver,
-                          final String topicName,
-                          final Serializer<K> keySerializer,
-                          final Serializer<V> valueSerializer,
-                          final long startTimestampMs,
-                          final long autoAdvanceMs) {
-        this(driver, topicName, new ConsumerRecordFactory<>(topicName, keySerializer, valueSerializer, startTimestampMs, autoAdvanceMs));
-    }
+    //Timing
+    private Instant currentTime;
+    private final Duration advanceDuration;
 
     /**
      * Create a test input topic to pipe messages in.
@@ -127,81 +69,97 @@ public class TestInputTopic<K, V> {
      * @param keySerde   the key serializer
      * @param valueSerde the value serializer
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public TestInputTopic(final TopologyTestDriver driver,
+    TestInputTopic(final TopologyTestDriver driver,
                           final String topicName,
                           final Serde<K> keySerde,
                           final Serde<V> valueSerde) {
-        this(driver, topicName, keySerde.serializer(), valueSerde.serializer());
+        this(driver, topicName, keySerde, valueSerde, Instant.now(), Duration.ZERO);
     }
 
     /**
      * Create a test input topic to pipe messages in.
-     * Auto-advance is disabled.
+     * Uses provided startTimestamp and autoAdvance duration for timestamp generation
      *
-     * @param driver           TopologyTestDriver to use
-     * @param topicName        the topic name used
-     * @param keySerde         the key serializer
-     * @param valueSerde       the value serializer
-     * @param startTimestampMs the initial timestamp for generated records
+     * @param driver     TopologyTestDriver to use
+     * @param topicName  the topic name used
+     * @param keySerde   the key serializer
+     * @param valueSerde the value serializer
+     * @param startTimestamp the initial timestamp for records
+     * @param autoAdvance the time increment per record
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public TestInputTopic(final TopologyTestDriver driver,
+    TestInputTopic(final TopologyTestDriver driver,
                           final String topicName,
                           final Serde<K> keySerde,
                           final Serde<V> valueSerde,
-                          final long startTimestampMs) {
-        this(driver, topicName, keySerde.serializer(), valueSerde.serializer(), startTimestampMs);
+                          final Instant startTimestamp,
+                          final Duration autoAdvance) {
+        this(driver, topicName, keySerde.serializer(), valueSerde.serializer(), startTimestamp, autoAdvance);
     }
 
     /**
      * Create a test input topic to pipe messages in.
-     *
-     * @param driver           TopologyTestDriver to use
-     * @param topicName        the topic name used
-     * @param keySerde         the key serializer
-     * @param valueSerde       the value serializer
-     * @param startTimestampMs the initial timestamp for generated records
-     * @param autoAdvanceMs    the time increment pre generated record
-     */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public TestInputTopic(final TopologyTestDriver driver,
-                          final String topicName,
-                          final Serde<K> keySerde,
-                          final Serde<V> valueSerde,
-                          final long startTimestampMs,
-                          final long autoAdvanceMs) {
-        this(driver, topicName, keySerde.serializer(), valueSerde.serializer(), startTimestampMs, autoAdvanceMs);
-    }
-
-    /**
-     * Create a test input topic to pipe messages in.
-     * Uses provided factory, Validate inputs
+     * Validate inputs
      *
      * @param driver    TopologyTestDriver to use
      * @param topicName the topic name used
-     * @param factory   ConsumerRecordFactory to use
+     * @param keySerializer   the key serializer
+     * @param valueSerializer the value serializer
+     * @param startTimestamp the initial timestamp for records
+     * @param autoAdvance the time increment per record
      */
-    @SuppressWarnings("WeakerAccess")
-    protected TestInputTopic(final TopologyTestDriver driver,
+    TestInputTopic(final TopologyTestDriver driver,
                              final String topicName,
-                             final ConsumerRecordFactory<K, V> factory) {
+                             final Serializer<K> keySerializer,
+                             final Serializer<V> valueSerializer,
+                             final Instant startTimestamp,
+                             final Duration autoAdvance) {
         Objects.requireNonNull(driver, "TopologyTestDriver cannot be null");
         Objects.requireNonNull(topicName, "topicName cannot be null");
-        Objects.requireNonNull(factory, "ConsumerRecordFactory cannot be null");
+        Objects.requireNonNull(keySerializer, "keySerializer cannot be null");
+        Objects.requireNonNull(valueSerializer, "valueSerializer cannot be null");
+        Objects.requireNonNull(startTimestamp, "startTimestamp cannot be null");
+        Objects.requireNonNull(autoAdvance, "autoAdvance cannot be null");
         this.driver = driver;
         this.topic = topicName;
-        this.factory = factory;
+        this.keySerializer=keySerializer;
+        this.valueSerializer=valueSerializer;
+        this.currentTime = startTimestamp;
+        if (autoAdvance.isNegative()) {
+            throw new IllegalArgumentException("autoAdvance must be positive");
+        }
+        this.advanceDuration = autoAdvance;
+
     }
 
     /**
      * Advances the internally tracked time.
      *
-     * @param advanceMs the amount of time to advance
+     * @param advance the duration of time to advance
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
-    public void advanceTimeMs(final long advanceMs) {
-        factory.advanceTimeMs(advanceMs);
+    public void advanceTime(final Duration advance) {
+        if (advance.isNegative()) {
+            throw new IllegalArgumentException("advance must be positive");
+        }
+        currentTime = currentTime.plus(advance);
+    }
+
+    private Instant getTimestampAndAdvanced() {
+        final Instant timestamp = currentTime;
+        currentTime = currentTime.plus(advanceDuration);
+        return timestamp;
+    }
+
+    /**
+     * Send an input message with the given record on the topic and then commit the messages.
+     *
+     * @param record the record to sent
+     */
+    @SuppressWarnings({"WeakerAccess", "unused"})
+    public void pipeInput(final TestRecord<K, V> record) {
+        //if record timestamp not set get timestamp and advance
+        Instant timestamp = (record.getRecordTime() == null) ? getTimestampAndAdvanced() : record.getRecordTime();
+        driver.pipeRecord(topic, record, keySerializer, valueSerializer, timestamp);
     }
 
     /**
@@ -211,7 +169,7 @@ public class TestInputTopic<K, V> {
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final V value) {
-        driver.pipeInput(factory.create(value));
+        pipeInput(new TestRecord<>(value));
     }
 
     /**
@@ -222,7 +180,7 @@ public class TestInputTopic<K, V> {
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final K key, final V value) {
-        driver.pipeInput(factory.create(key, value));
+        pipeInput(new TestRecord<>(key, value));
     }
 
     /**
@@ -233,9 +191,23 @@ public class TestInputTopic<K, V> {
      * @param timestampMs the record timestamp
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
+    @Deprecated
     public void pipeInput(final V value,
                           final long timestampMs) {
-        driver.pipeInput(factory.create(value, timestampMs));
+        pipeInput(new TestRecord<>(null, value, timestampMs));
+    }
+
+    /**
+     * Send an input message with the given key and timestamp on the topic and then commit the messages.
+     * Does not auto advance internally tracked time.
+     *
+     * @param value       the record value
+     * @param timestamp the record timestamp
+     */
+    @SuppressWarnings({"WeakerAccess", "unused"})
+    public void pipeInput(final V value,
+                          final Instant timestamp) {
+        pipeInput(new TestRecord<>(null, value, timestamp));
     }
 
     /**
@@ -247,43 +219,39 @@ public class TestInputTopic<K, V> {
      * @param timestampMs the record timestamp
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
+    @Deprecated
     public void pipeInput(final K key,
                           final V value,
                           final long timestampMs) {
-        driver.pipeInput(factory.create(key, value, timestampMs));
+        pipeInput(new TestRecord<>(key, value, timestampMs));
     }
 
     /**
-     * Send an input message with the given key, value and headers on the topic and then commit the messages.
-     * The timestamp will be generated based on the constructor provided start time and time will auto advance.
-     *
-     * @param key     the record key
-     * @param value   the record value
-     * @param headers the record headers
-     */
-    @SuppressWarnings({"WeakerAccess", "unused"})
-    public void pipeInput(final K key,
-                          final V value,
-                          final Headers headers) {
-        driver.pipeInput(factory.create(key, value, headers));
-    }
-
-
-    /**
-     * Send an input message with the given key, value, timestamp and headers on the topic and then commit the messages.
+     * Send an input message with the given key, value and timestamp on the topic and then commit the messages.
      * Does not auto advance internally tracked time.
      *
      * @param key         the record key
      * @param value       the record value
-     * @param headers     the record headers
-     * @param timestampMs the record timestamp
+     * @param timestamp the record timestamp
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final K key,
                           final V value,
-                          final Headers headers,
-                          final long timestampMs) {
-        driver.pipeInput(factory.create(key, value, headers, timestampMs));
+                          final Instant timestamp) {
+        pipeInput(new TestRecord<>(key, value, timestamp));
+    }
+
+    /**
+     * Send input messages with the given KeyValue  list on the topic  then commit each message individually.
+     * The timestamp will be generated based on the constructor provided start time and time will auto advance.
+     *
+     * @param records the list of TestRecord records
+     */
+    @SuppressWarnings({"WeakerAccess", "unused"})
+    public void pipeRecordList(final List<? extends TestRecord<K, V>> records) {
+        for (final TestRecord<K, V> record : records) {
+            pipeInput(record);
+        }
     }
 
     /**
@@ -294,7 +262,9 @@ public class TestInputTopic<K, V> {
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeKeyValueList(final List<KeyValue<K, V>> keyValues) {
-        driver.pipeInput(factory.create(keyValues));
+        for (final KeyValue<K, V> keyValue : keyValues) {
+            pipeInput(keyValue.key, keyValue.value);
+        }
     }
 
     /**
@@ -305,8 +275,9 @@ public class TestInputTopic<K, V> {
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeValueList(final List<V> values) {
-        final List<KeyValue<K, V>> keyValues = values.stream().map(v -> new KeyValue<K, V>(null, v)).collect(Collectors.toList());
-        pipeKeyValueList(keyValues);
+        for (final V value : values) {
+            pipeInput(value);
+        }
     }
 
     /**
@@ -315,13 +286,17 @@ public class TestInputTopic<K, V> {
      *
      * @param keyValues      the list of KeyValue records
      * @param startTimestamp the timestamp for the first generated record
-     * @param advanceMs      the time difference between two consecutive generated records
+     * @param advance        the time difference between two consecutive generated records
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeKeyValueList(final List<KeyValue<K, V>> keyValues,
-                                 final long startTimestamp,
-                                 final long advanceMs) {
-        driver.pipeInput(factory.create(keyValues, startTimestamp, advanceMs));
+                                 final Instant startTimestamp,
+                                 final Duration advance) {
+        Instant recordTime = startTimestamp;
+        for (final KeyValue<K, V> keyValue : keyValues) {
+            pipeInput(keyValue.key, keyValue.value, recordTime);
+            recordTime = recordTime.plus(advance);
+        }
     }
 
     /**
@@ -330,14 +305,17 @@ public class TestInputTopic<K, V> {
      *
      * @param values         the list of KeyValue records
      * @param startTimestamp the timestamp for the first generated record
-     * @param advanceMs      the time difference between two consecutive generated records
+     * @param advance        the time difference between two consecutive generated records
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeValueList(final List<V> values,
-                              final long startTimestamp,
-                              final long advanceMs) {
-        final List<KeyValue<K, V>> keyValues = values.stream().map(v -> new KeyValue<K, V>(null, v)).collect(Collectors.toList());
-        pipeKeyValueList(keyValues, startTimestamp, advanceMs);
+                              final Instant startTimestamp,
+                              final Duration advance) {
+        Instant recordTime = startTimestamp;
+        for (final V value : values) {
+            pipeInput(value, recordTime);
+            recordTime = recordTime.plus(advance);
+        }
     }
 
     @Override

@@ -17,7 +17,6 @@ package com.github.jukkakarvanen.kafka.streams.test;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.TopologyTestDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +27,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -48,8 +48,8 @@ public class SimpleTopicTest {
         //Create Actual Stream Processing pipeline
         app.createStream(builder);
         testDriver = new TopologyTestDriver(builder.build(), app.config);
-        inputTopic = new TestInputTopic<>(testDriver, TestStream.INPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
-        outputTopic = new TestOutputTopic<>(testDriver, TestStream.OUTPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
+        inputTopic = testDriver.createInputTopic(TestStream.INPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
+        outputTopic = testDriver.createOutputTopic(TestStream.OUTPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
     }
 
     @AfterEach
@@ -69,7 +69,7 @@ public class SimpleTopicTest {
         inputTopic.pipeInput("Hello");
         assertThat(outputTopic.readValue(), equalTo("Hello"));
         //No more output in topic
-        assertThat(outputTopic.readRecord(), nullValue());
+        assertThat(outputTopic.isEmpty(), is(true));
     }
 
     @Test
