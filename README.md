@@ -24,7 +24,10 @@ These classes are proposed as improvements to main Apache Kafka project kafka-st
 
 # Documentation        
 
-See [JavaDoc](https://jukkakarvanen.github.io/kafka-streams-test-topics/)        
+See [JavaDoc](https://jukkakarvanen.github.io/kafka-streams-test-topics/)
+
+## Maven repository info
+https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-topics        
 
 ## Dependency in pom.xml
 
