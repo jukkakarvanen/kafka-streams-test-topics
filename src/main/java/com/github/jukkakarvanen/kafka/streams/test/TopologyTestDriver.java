@@ -185,11 +185,11 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
 
     final protected Queue<ProducerRecord<byte[], byte[]>> getRecordsQueue(String topicName) {
         //This is hack because no access to private queue
-        ProducerRecord<byte[], byte[]> record = readOutput(topicName);
-        if (record != null) {
-         outputRecordsByTopic.computeIfAbsent(topicName, k -> new LinkedList<>()).add(record);
+        final Queue<ProducerRecord<byte[], byte[]>> outputRecords = outputRecordsByTopic.computeIfAbsent(topicName, k -> new LinkedList<>());
+        ProducerRecord<byte[], byte[]> record;
+        while ((record = readOutput(topicName)) != null) {
+            outputRecords.add(record);
         }
-        final Queue<ProducerRecord<byte[], byte[]>> outputRecords = outputRecordsByTopic.get(topicName);
         return outputRecords;
     }
 
