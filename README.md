@@ -62,8 +62,8 @@ https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-t
 * [TestOutputTopicTest.java](src/test/java/com/github/jukkakarvanen/kafka/streams/test/TestOutputTopicTest.java)
 
 
-## Example how to simplify code: (old version of this package)
+## Example how to simplify code: 
 [New versions](https://github.com/jukkakarvanen/kafka-streams-examples/blob/InputOutputTopic/src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java)
 based on Confluent example and
-[Difference with original](https://github.com/jukkakarvanen/kafka-streams-examples/compare/TopologyTestDriver_tests...jukkakarvanen:InputOutputTopic#diff-eb92f3ffdd1c19905ffeba20a254eafc)
+[Difference with original](https://github.com/jukkakarvanen/kafka-streams-examples/compare/5.2.1-post...jukkakarvanen:InputOutputTopic)
 .
