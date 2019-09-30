@@ -24,7 +24,7 @@ import java.time.Instant;
 
 /**
  * A key/value pair to be send to or received from Kafka. This also consists header information
- * and a timestamp.
+ * and a timestamp. If record do not contain a timestamp, the TestInputTopic will use auto advance time logic.
  */
 public class TestRecord<K, V> {
 
@@ -43,7 +43,7 @@ public class TestRecord<K, V> {
      * @param recordTime The timestamp of the record as Instant. If null,
      *                  the timestamp is assigned using Instant.now() or internally tracked time.
      */
-    public TestRecord(final K key, V value, final Headers headers, final Instant recordTime) {
+    public TestRecord(final K key, final V value, final Headers headers, final Instant recordTime) {
         this.key = key;
         this.value = value;
         this.recordTime = recordTime;
@@ -60,7 +60,7 @@ public class TestRecord<K, V> {
      * @param timestamp The timestamp of the record, in milliseconds since epoch. If null,
      *                  the timestamp is assigned using System.currentTimeMillis() or internally tracked time.
      */
-    public TestRecord(final K key, V value, final Headers headers, final Long timestamp) {
+    public TestRecord(final K key, final V value, final Headers headers, final Long timestamp) {
         if (timestamp != null) {
             if (timestamp < 0)
                 throw new IllegalArgumentException(
@@ -81,20 +81,8 @@ public class TestRecord<K, V> {
      * @param recordTime The timestamp of the record as Instant. If null,
      *                  the timestamp is assigned using Instant.now() or internally tracked time.
      */
-    public TestRecord(final K key, V value, final Instant recordTime) {
+    public TestRecord(final K key, final V value, final Instant recordTime) {
         this(key, value, null, recordTime);
-    }
-
-    /**
-     * Creates a record with a specified timestamp
-     *
-     * @param key The key that will be included in the record
-     * @param value The record contents
-     * @param timestamp The timestamp of the record, in milliseconds since epoch. If null,
-     *                  the timestamp is assigned using System.currentTimeMillis() or internally tracked time.
-     */
-    public TestRecord(final K key, final V value, final Long timestamp) {
-        this(key, value, null, timestamp);
     }
 
     /**
@@ -180,40 +168,52 @@ public class TestRecord<K, V> {
         return this.recordTime == null ? null : this.recordTime.toEpochMilli();
     }
 
+    /**
+     * @return The headers
+     */
     public Headers getHeaders() {
         return headers;
     }
 
+    /**
+     * @return The key (or null if no key is specified)
+     */
     public K getKey() {
         return key;
     }
 
+    /**
+     * @return The value
+     */
     public V getValue() {
         return value;
     }
 
+    /**
+     * @return The recordTime as Instant
+     */
     public Instant getRecordTime() {
         return recordTime;
     }
 
     @Override
     public String toString() {
-        String headers = this.headers == null ? "null" : this.headers.toString();
-        String key = this.key == null ? "null" : this.key.toString();
-        String value = this.value == null ? "null" : this.value.toString();
-        String recordTime = this.recordTime == null ? "null" : this.recordTime.toString();
+        final String headers = this.headers == null ? "null" : this.headers.toString();
+        final String key = this.key == null ? "null" : this.key.toString();
+        final String value = this.value == null ? "null" : this.value.toString();
+        final String recordTime = this.recordTime == null ? "null" : this.recordTime.toString();
         return "TestRecord(headers=" + headers + ", key=" + key + ", value=" + value +
             ", recordTime=" + recordTime + ")";
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o)
             return true;
         else if (!(o instanceof TestRecord))
             return false;
 
-        TestRecord<?, ?> that = (TestRecord<?, ?>) o;
+        final TestRecord<?, ?> that = (TestRecord<?, ?>) o;
 
         if (key != null ? !key.equals(that.key) : that.key != null) 
             return false;

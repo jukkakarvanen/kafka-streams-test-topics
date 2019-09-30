@@ -20,9 +20,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.annotation.InterfaceStability;
-import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -32,7 +30,6 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
-import org.apache.kafka.streams.test.OutputVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +51,9 @@ import java.util.Queue;
  * Best of all, the class works without a real Kafka broker, so the tests execute very quickly with very little overhead.
  * <p>
  * Using the {@code TopologyTestDriver} in tests is easy: simply instantiate the driver and provide a {@link Topology}
- * (cf. {@link StreamsBuilder#build()}) and {@link Properties configs}, create {@link #createInputTopic(String, Serde, Serde)}
+ * (cf. {@link StreamsBuilder#build()}) and {@link Properties configs}, create {@link #createInputTopic(String, Serializer, Serializer)}
  * and use the {@link TestInputTopic} to supply an input message to the topology,
- * and then create {@link #createOutputTopic(String, Serde, Serde)} and use the {@link TestOutputTopic} to read and
+ * and then create {@link #createOutputTopic(String, Deserializer, Deserializer)} and use the {@link TestOutputTopic} to read and
  * verify any messages output by the topology.
  * <p>
  * Although the driver doesn't use a real Kafka broker, it does simulate Kafka {@link Consumer consumers} and
@@ -91,7 +88,7 @@ import java.util.Queue;
  * TestInputTopic<String, String> inputTopic = driver.createInputTopic("input-topic", stringSerde, stringSerde);
  * inputTopic.pipeInput("key1", "value1");
  * }</pre>
- *
+ * <p>
  * When {@link TestInputTopic#pipeInput(Object, Object)} is called, the driver passes the input message through to the appropriate source that
  * consumes the named topic, and will invoke the processor(s) downstream of the source.
  * If your topology's processors forward messages to sinks, your test can then consume these output messages to verify
@@ -108,7 +105,7 @@ import java.util.Queue;
  * KeyValue<String, String> record2 = outputTopic1.readKeyValue();
  * KeyValue<String, String> record3 = outputTopic1.readKeyValue();
  * }</pre>
- *
+ * <p>
  * Again, our example topology generates messages with string keys and values, so we supply our string deserializer
  * instance for use on both the keys and values. Your test logic can then verify whether these output records are
  * correct.
@@ -169,9 +166,9 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
     /**
      * Create a new test diver instance.
      *
-     * @param topology               the topology to be tested
-     * @param config                 the configuration for the topology
-     * @param initialWallClockTime   the initial value of internally mocked wall-clock time
+     * @param topology             the topology to be tested
+     * @param config               the configuration for the topology
+     * @param initialWallClockTime the initial value of internally mocked wall-clock time
      */
     @SuppressWarnings("WeakerAccess")
     public TopologyTestDriver(final Topology topology,
@@ -211,54 +208,54 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
      * Uses current system time as start timestamp for records.
      * Auto-advance is disabled.
      *
-     * @param topicName             the name of the topic
-     * @param keySerde   the serde for the key type
-     * @param valueSerde the serde for the value type
-     * @param <K> the key type
-     * @param <V> the value type
+     * @param topicName       the name of the topic
+     * @param keySerializer   the Serializer for the key type
+     * @param valueSerializer the Serializer for the value type
+     * @param <K>             the key type
+     * @param <V>             the value type
      * @return {@link TestInputTopic} object
      */
     public final <K, V> TestInputTopic<K, V> createInputTopic(final String topicName,
-                                                              final Serde<K> keySerde,
-                                                              final Serde<V> valueSerde) {
-        return new TestInputTopic<K, V>(this, topicName, keySerde, valueSerde);
+                                                              final Serializer<K> keySerializer,
+                                                              final Serializer<V> valueSerializer) {
+        return new TestInputTopic<K, V>(this, topicName, keySerializer, valueSerializer);
     }
 
     /**
      * Create {@link TestInputTopic} to be used for piping records to topic
      * Uses provided start timestamp and autoAdvance parameter for records
      *
-     * @param topicName             the name of the topic
-     * @param keySerde   the serde for the key type
-     * @param valueSerde the serde for the value type
-     * @param startTimestamp Start timestamp for auto-generated record time
-     * @param autoAdvance autoAdvance duration for auto-generated record time
-     * @param <K> the key type
-     * @param <V> the value type
+     * @param topicName         the name of the topic
+     * @param keySerializer   the Deserializer for the key type
+     * @param valueSerializer the Deserializer for the value type
+     * @param startTimestamp    Start timestamp for auto-generated record time
+     * @param autoAdvance       autoAdvance duration for auto-generated record time
+     * @param <K>               the key type
+     * @param <V>               the value type
      * @return {@link TestInputTopic} object
      */
     public final <K, V> TestInputTopic<K, V> createInputTopic(final String topicName,
-                                                              final Serde<K> keySerde,
-                                                              final Serde<V> valueSerde,
+                                                              final Serializer<K> keySerializer,
+                                                              final Serializer<V> valueSerializer,
                                                               final Instant startTimestamp,
                                                               final Duration autoAdvance) {
-        return new TestInputTopic<K, V>(this, topicName, keySerde, valueSerde, startTimestamp, autoAdvance);
+        return new TestInputTopic<K, V>(this, topicName, keySerializer, valueSerializer, startTimestamp, autoAdvance);
     }
 
     /**
      * Create {@link TestOutputTopic} to be used for reading records from topic
      *
-     * @param topicName             the name of the topic
-     * @param keySerde   the serde for the key type
-     * @param valueSerde the serde for the value type
-     * @param <K> the key type
-     * @param <V> the value type
+     * @param topicName         the name of the topic
+     * @param keyDeserializer   the Deserializer for the key type
+     * @param valueDeserializer the Deserializer for the value type
+     * @param <K>               the key type
+     * @param <V>               the value type
      * @return {@link TestOutputTopic} object
      */
     public final <K, V> TestOutputTopic<K, V> createOutputTopic(final String topicName,
-                                                                final Serde<K> keySerde,
-                                                                final Serde<V> valueSerde) {
-        return new TestOutputTopic<K, V>(this, topicName, keySerde, valueSerde);
+                                                                final Deserializer<K> keyDeserializer,
+                                                                final Deserializer<V> valueDeserializer) {
+        return new TestOutputTopic<K, V>(this, topicName, keyDeserializer, valueDeserializer);
     }
 
 
@@ -269,14 +266,14 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
      * @param topic             the name of the topic
      * @param keyDeserializer   the deserializer for the key type
      * @param valueDeserializer the deserializer for the value type
-     * @param <K> the key type
-     * @param <V> the value type
+     * @param <K>               the key type
+     * @param <V>               the value type
      * @return the next record on that topic, or {@code null} if there is no record available
      */
     @SuppressWarnings("WeakerAccess")
     <K, V> TestRecord<K, V> readRecord(final String topic,
-                                         final Deserializer<K> keyDeserializer,
-                                         final Deserializer<V> valueDeserializer) {
+                                       final Deserializer<K> keyDeserializer,
+                                       final Deserializer<V> valueDeserializer) {
         final Queue<? extends ProducerRecord<byte[], byte[]>> outputRecords = getRecordsQueue(topic);
         if (outputRecords == null) {
             throw new NoSuchElementException("Uninitialized topic: " + topic);
@@ -298,8 +295,8 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
      * @param record          TestRecord to be send
      * @param keySerializer   the key serializer
      * @param valueSerializer the value serializer
-     * @param <K> the key type
-     * @param <V> the value type*
+     * @param <K>             the key type
+     * @param <V>             the value type*
      * @param time            timestamp to override the record timestamp
      */
     @SuppressWarnings("WeakerAccess")
@@ -317,7 +314,7 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
     final long getQueueSize(final String topic) {
         //This is not accurate
         final Queue<ProducerRecord<byte[], byte[]>> queue = getRecordsQueue(topic);
-        if (queue == null ) {
+        if (queue == null) {
             //Return 0 if not initialized, getRecordsQueue throw exception if non existing topic
             return 0;
         }
