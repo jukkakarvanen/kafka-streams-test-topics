@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.jukkakarvanen.kafka.streams.example;
+package com.github.jukkakarvanen.kafka.streams.test;
 
 import com.github.jukkakarvanen.kafka.streams.test.TestInputTopic;
 import com.github.jukkakarvanen.kafka.streams.test.TestOutputTopic;
@@ -45,9 +45,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * Test of TestOutputTopic with older Kafka versio
- * @see TestOutputTopic
+ * Test of TestOutputTopic with older Kafka version and Junit 4
+ *
  * @author Jukka Karvanen / jukinimi.com
+ * @see TestOutputTopic
  */
 public class TestOutputTopicTest {
 
