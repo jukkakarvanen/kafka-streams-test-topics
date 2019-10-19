@@ -21,13 +21,14 @@ import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 
 import java.time.Instant;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * A key/value pair to be send to or received from Kafka. This also consists header information
  * and a timestamp. If record do not contain a timestamp, the TestInputTopic will use auto advance time logic.
  */
 public class TestRecord<K, V> {
-
     private final Headers headers;
     private final K key;
     private final V value;
@@ -57,17 +58,19 @@ public class TestRecord<K, V> {
      * @param key The key that will be included in the record
      * @param value The record contents
      * @param headers the headers that will be included in the record
-     * @param timestamp The timestamp of the record, in milliseconds since epoch. If null,
+     * @param timestampMs The timestamp of the record, in milliseconds since epoch. If null,
      *                  the timestamp is assigned using System.currentTimeMillis() or internally tracked time.
      */
-    public TestRecord(final K key, final V value, final Headers headers, final Long timestamp) {
-        if (timestamp != null) {
-            if (timestamp < 0)
+    public TestRecord(final K key, final V value, final Headers headers, final Long timestampMs) {
+        if (timestampMs != null) {
+            if (timestampMs < 0) {
                 throw new IllegalArgumentException(
-                        String.format("Invalid timestamp: %d. Timestamp should always be non-negative or null.", timestamp));
-            this.recordTime = Instant.ofEpochMilli(timestamp);
-        } else
+                        String.format("Invalid timestamp: %d. Timestamp should always be non-negative or null.", timestampMs));
+            }
+            this.recordTime = Instant.ofEpochMilli(timestampMs);
+        } else {
             this.recordTime = null;
+        }
         this.key = key;
         this.value = value;
         this.headers = new RecordHeaders(headers);
@@ -127,7 +130,11 @@ public class TestRecord<K, V> {
      * @param record The record contents
      */
     public TestRecord(final ConsumerRecord<K, V> record) {
-        this(record.key(), record.value(), record.headers(), record.timestamp());
+        Objects.requireNonNull(record);
+        this.key = record.key();
+        this.value = record.value();
+        this.headers = record.headers();
+        this.recordTime = Instant.ofEpochMilli(record.timestamp());
     }
 
     /**
@@ -136,7 +143,11 @@ public class TestRecord<K, V> {
      * @param record The record contents
      */
     public TestRecord(final ProducerRecord<K, V> record) {
-        this(record.key(), record.value(), record.headers(), record.timestamp());
+        Objects.requireNonNull(record);
+        this.key = record.key();
+        this.value = record.value();
+        this.headers = record.headers();
+        this.recordTime = Instant.ofEpochMilli(record.timestamp());
     }
 
     /**
@@ -198,12 +209,12 @@ public class TestRecord<K, V> {
 
     @Override
     public String toString() {
-        final String headers = this.headers == null ? "null" : this.headers.toString();
-        final String key = this.key == null ? "null" : this.key.toString();
-        final String value = this.value == null ? "null" : this.value.toString();
-        final String recordTime = this.recordTime == null ? "null" : this.recordTime.toString();
-        return "TestRecord(headers=" + headers + ", key=" + key + ", value=" + value +
-            ", recordTime=" + recordTime + ")";
+        return new StringJoiner(", ", TestRecord.class.getSimpleName() + "[", "]")
+                .add("key=" + key)
+                .add("value=" + value)
+                .add("headers=" + headers)
+                .add("recordTime=" + recordTime)
+                .toString();
     }
 
     @Override

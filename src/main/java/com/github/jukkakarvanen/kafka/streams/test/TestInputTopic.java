@@ -18,11 +18,11 @@ package com.github.jukkakarvanen.kafka.streams.test;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KeyValue;
 
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * TestInputTopic is used to pipe records to topic in {@link TopologyTestDriver}.
@@ -55,23 +55,6 @@ public class TestInputTopic<K, V> {
     //Timing
     private Instant currentTime;
     private final Duration advanceDuration;
-
-    /**
-     * Create a test input topic to pipe messages in.
-     * Uses current system time as start timestamp.
-     * Auto-advance is disabled.
-     *
-     * @param driver     TopologyTestDriver to use
-     * @param topicName  the topic name used
-     * @param keySerializer   the key serializer
-     * @param valueSerializer the value serializer
-     */
-    TestInputTopic(final TopologyTestDriver driver,
-                   final String topicName,
-                   final Serializer<K> keySerializer,
-                   final Serializer<V> valueSerializer) {
-        this(driver, topicName, keySerializer, valueSerializer, Instant.now(), Duration.ZERO);
-    }
 
     /**
      * Create a test input topic to pipe messages in.
@@ -113,7 +96,6 @@ public class TestInputTopic<K, V> {
      *
      * @param advance the duration of time to advance
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void advanceTime(final Duration advance) {
         if (advance.isNegative()) {
             throw new IllegalArgumentException("advance must be positive");
@@ -132,7 +114,6 @@ public class TestInputTopic<K, V> {
      *
      * @param record the record to sent
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final TestRecord<K, V> record) {
         //if record timestamp not set get timestamp and advance
         final Instant timestamp = (record.getRecordTime() == null) ? getTimestampAndAdvanced() : record.getRecordTime();
@@ -144,7 +125,6 @@ public class TestInputTopic<K, V> {
      *
      * @param value the record value
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final V value) {
         pipeInput(new TestRecord<>(value));
     }
@@ -155,7 +135,6 @@ public class TestInputTopic<K, V> {
      * @param key   the record key
      * @param value the record value
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final K key, final V value) {
         pipeInput(new TestRecord<>(key, value));
     }
@@ -167,7 +146,6 @@ public class TestInputTopic<K, V> {
      * @param value       the record value
      * @param timestamp the record timestamp
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final V value,
                           final Instant timestamp) {
         pipeInput(new TestRecord<K, V>(null, value, timestamp));
@@ -181,7 +159,6 @@ public class TestInputTopic<K, V> {
      * @param value       the record value
      * @param timestampMs the record timestamp
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final K key,
                           final V value,
                           final long timestampMs) {
@@ -196,7 +173,6 @@ public class TestInputTopic<K, V> {
      * @param value       the record value
      * @param timestamp the record timestamp
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeInput(final K key,
                           final V value,
                           final Instant timestamp) {
@@ -209,7 +185,6 @@ public class TestInputTopic<K, V> {
      *
      * @param records the list of TestRecord records
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeRecordList(final List<? extends TestRecord<K, V>> records) {
         for (final TestRecord<K, V> record : records) {
             pipeInput(record);
@@ -222,7 +197,6 @@ public class TestInputTopic<K, V> {
      *
      * @param keyValues the list of KeyValue records
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeKeyValueList(final List<KeyValue<K, V>> keyValues) {
         for (final KeyValue<K, V> keyValue : keyValues) {
             pipeInput(keyValue.key, keyValue.value);
@@ -235,7 +209,6 @@ public class TestInputTopic<K, V> {
      *
      * @param values the list of KeyValue records
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeValueList(final List<V> values) {
         for (final V value : values) {
             pipeInput(value);
@@ -250,7 +223,6 @@ public class TestInputTopic<K, V> {
      * @param startTimestamp the timestamp for the first generated record
      * @param advance        the time difference between two consecutive generated records
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeKeyValueList(final List<KeyValue<K, V>> keyValues,
                                  final Instant startTimestamp,
                                  final Duration advance) {
@@ -269,7 +241,6 @@ public class TestInputTopic<K, V> {
      * @param startTimestamp the timestamp for the first generated record
      * @param advance        the time difference between two consecutive generated records
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public void pipeValueList(final List<V> values,
                               final Instant startTimestamp,
                               final Duration advance) {
@@ -282,6 +253,10 @@ public class TestInputTopic<K, V> {
 
     @Override
     public String toString() {
-        return "TestInputTopic{topic='" + topic + "'}";
+        return new StringJoiner(", ", TestInputTopic.class.getSimpleName() + "[", "]")
+                .add("topic='" + topic + "'")
+                .add("keySerializer=" + keySerializer.getClass().getSimpleName())
+                .add("valueSerializer=" + valueSerializer.getClass().getSimpleName())
+                .toString();
     }
 }

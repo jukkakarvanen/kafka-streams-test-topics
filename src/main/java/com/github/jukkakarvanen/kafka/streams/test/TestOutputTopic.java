@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * TestOutputTopic is used to read records from topic in {@link TopologyTestDriver}.
@@ -68,6 +69,8 @@ public class TestOutputTopic<K, V> {
                     final Deserializer<V> valueDeserializer) {
         Objects.requireNonNull(driver, "TopologyTestDriver cannot be null");
         Objects.requireNonNull(topicName, "topicName cannot be null");
+        Objects.requireNonNull(keyDeserializer, "keyDeserializer cannot be null");
+        Objects.requireNonNull(valueDeserializer, "valueDeserializer cannot be null");
         this.driver = driver;
         this.topic = topicName;
         this.keyDeserializer = keyDeserializer;
@@ -82,7 +85,6 @@ public class TestOutputTopic<K, V> {
      *
      * @return Next value for output topic
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public V readValue() {
         final TestRecord<K, V> record = readRecord();
         return record.value();
@@ -93,7 +95,6 @@ public class TestOutputTopic<K, V> {
      *
      * @return Next output as KeyValue
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public KeyValue<K, V> readKeyValue() {
         final TestRecord<K, V> record = readRecord();
         return new KeyValue<>(record.key(), record.value());
@@ -104,7 +105,6 @@ public class TestOutputTopic<K, V> {
      *
      * @return Next output as ProducerRecord
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public TestRecord<K, V> readRecord() {
         return driver.readRecord(topic, keyDeserializer, valueDeserializer);
     }
@@ -115,7 +115,6 @@ public class TestOutputTopic<K, V> {
      *
      * @return Map of output by key
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public List<TestRecord<K, V>> readRecordsToList() {
         final List<TestRecord<K, V>> output = new LinkedList<>();
         while (!isEmpty()) {
@@ -131,12 +130,14 @@ public class TestOutputTopic<K, V> {
      *
      * @return Map of output by key
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public Map<K, V> readKeyValuesToMap() {
         final Map<K, V> output = new HashMap<>();
         TestRecord<K, V> outputRow;
         while (!isEmpty()) {
             outputRow = readRecord();
+            if (outputRow.key() == null) {
+                throw new IllegalStateException("Null keys not allowed with readKeyValuesToMap method");
+            }
             output.put(outputRow.key(), outputRow.value());
         }
         return output;
@@ -147,7 +148,6 @@ public class TestOutputTopic<K, V> {
      *
      * @return List of output KeyValues
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public List<KeyValue<K, V>> readKeyValuesToList() {
         final List<KeyValue<K, V>> output = new LinkedList<>();
         KeyValue<K, V> outputRow;
@@ -163,7 +163,6 @@ public class TestOutputTopic<K, V> {
      *
      * @return List of output values
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
     public List<V> readValuesToList() {
         final List<V> output = new LinkedList<>();
         V outputValue;
@@ -194,6 +193,11 @@ public class TestOutputTopic<K, V> {
 
     @Override
     public String toString() {
-        return "TestOutputTopic{topic='" + topic + "',size=" + getQueueSize() + "}";
+        return new StringJoiner(", ", TestOutputTopic.class.getSimpleName() + "[", "]")
+                .add("topic='" + topic + "'")
+                .add("keyDeserializer=" + keyDeserializer.getClass().getSimpleName())
+                .add("valueDeserializer=" + valueDeserializer.getClass().getSimpleName())
+                .add("size=" + getQueueSize())
+                .toString();
     }
 }

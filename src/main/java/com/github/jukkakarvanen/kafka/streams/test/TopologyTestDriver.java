@@ -19,7 +19,6 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.annotation.InterfaceStability;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -131,7 +130,6 @@ import java.util.Queue;
  * @see TestInputTopic
  * @see TestOutputTopic
  */
-@InterfaceStability.Evolving
 public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDriver {
 
     private static final Logger log = LoggerFactory.getLogger(TopologyTestDriver.class);
@@ -157,6 +155,7 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
      * @param initialWallClockTimeMs the initial value of internally mocked wall-clock time
      */
     @SuppressWarnings("WeakerAccess")
+    @Deprecated
     public TopologyTestDriver(final Topology topology,
                               final Properties config,
                               final long initialWallClockTimeMs) {
@@ -218,7 +217,7 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
     public final <K, V> TestInputTopic<K, V> createInputTopic(final String topicName,
                                                               final Serializer<K> keySerializer,
                                                               final Serializer<V> valueSerializer) {
-        return new TestInputTopic<K, V>(this, topicName, keySerializer, valueSerializer);
+        return new TestInputTopic<K, V>(this, topicName, keySerializer, valueSerializer, Instant.now(), Duration.ZERO);
     }
 
     /**
@@ -312,7 +311,6 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
     }
 
     final long getQueueSize(final String topic) {
-        //This is not accurate
         final Queue<ProducerRecord<byte[], byte[]>> queue = getRecordsQueue(topic);
         if (queue == null) {
             //Return 0 if not initialized, getRecordsQueue throw exception if non existing topic

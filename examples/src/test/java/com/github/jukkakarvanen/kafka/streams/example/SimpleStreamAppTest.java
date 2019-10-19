@@ -15,13 +15,12 @@
  */
 package com.github.jukkakarvanen.kafka.streams.example;
 
-import com.github.jukkakarvanen.kafka.streams.example.SimpleStreamApp;
 import com.github.jukkakarvanen.kafka.streams.test.TestInputTopic;
 import com.github.jukkakarvanen.kafka.streams.test.TestOutputTopic;
 import com.github.jukkakarvanen.kafka.streams.test.TopologyTestDriver;
-import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +48,8 @@ public class SimpleStreamAppTest {
         //Create Actual Stream Processing pipeline
         SimpleStreamApp.createStream(builder);
         testDriver = new TopologyTestDriver(builder.build(), SimpleStreamApp.getStreamsConfig());
-        inputTopic = testDriver.createInputTopic(SimpleStreamApp.INPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
-        outputTopic = testDriver.createOutputTopic(SimpleStreamApp.OUTPUT_TOPIC, new Serdes.StringSerde(), new Serdes.StringSerde());
+        inputTopic = testDriver.createInputTopic(SimpleStreamApp.INPUT_TOPIC, new StringSerializer(), new StringSerializer());
+        outputTopic = testDriver.createOutputTopic(SimpleStreamApp.OUTPUT_TOPIC, new StringDeserializer(), new StringDeserializer());
     }
 
     @After
