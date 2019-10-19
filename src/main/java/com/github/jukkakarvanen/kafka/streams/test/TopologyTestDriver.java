@@ -43,37 +43,41 @@ import java.util.Properties;
 import java.util.Queue;
 
 /**
- * Replacement class for {@link org.apache.kafka.streams.TopologyTestDriver} to use
- * {@link TestInputTopic} and {@link TestInputTopic} with Kafka version prior 2.4.0
+ * Replacement class for {@code org.apache.kafka.streams.TopologyTestDriver} to use
+ * {@link TestInputTopic} and {@link TestInputTopic} with Kafka version prior 2.4.0.
+ * <p>
+ * Replace import of {@code org.apache.kafka.streams.TopologyTestDriver} with this class to use new
+ * functionality.
+ * <p>
+ * To migrate to Kafka version 2.4.0 replace import of com.github.jukkakarvanen.kafka.streams.test with
+ * {@code org.apache.kafka.streams} or {@code org.apache.kafka.streams.test}
  *
  * @see TestInputTopic
  * @see TestOutputTopic
+ * @see TestRecord
  */
 public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDriver {
 
     private static final Logger log = LoggerFactory.getLogger(TopologyTestDriver.class);
 
     /**
-     * Create a new test diver instance.
-     * Initialized the internally mocked wall-clock time with {@link System#currentTimeMillis() current system time}.
+     * Create a new test driver instance.
      *
      * @param topology the topology to be tested
      * @param config   the configuration for the topology
      */
-    @SuppressWarnings("WeakerAccess")
     public TopologyTestDriver(final Topology topology,
                               final Properties config) {
         super(topology, config);
     }
 
     /**
-     * Create a new test diver instance.
+     * Create a new test driver instance.
      *
      * @param topology               the topology to be tested
      * @param config                 the configuration for the topology
      * @param initialWallClockTimeMs the initial value of internally mocked wall-clock time
      */
-    @SuppressWarnings("WeakerAccess")
     @Deprecated
     public TopologyTestDriver(final Topology topology,
                               final Properties config,
@@ -82,13 +86,12 @@ public class TopologyTestDriver extends org.apache.kafka.streams.TopologyTestDri
     }
 
     /**
-     * Create a new test diver instance.
+     * Create a new test driver instance.
      *
      * @param topology             the topology to be tested
      * @param config               the configuration for the topology
      * @param initialWallClockTime the initial value of internally mocked wall-clock time
      */
-    @SuppressWarnings("WeakerAccess")
     public TopologyTestDriver(final Topology topology,
                               final Properties config,
                               final Instant initialWallClockTime) {
