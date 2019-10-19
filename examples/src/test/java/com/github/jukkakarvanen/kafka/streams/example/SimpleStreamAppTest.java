@@ -28,10 +28,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit test of {@link SimpleStreamApp} stream using TopologyTestDriver.
@@ -68,9 +65,9 @@ public class SimpleStreamAppTest {
     public void testOneWord() {
         //Feed word "Hello" to inputTopic and no kafka key, timestamp is irrelevant in this case
         inputTopic.pipeInput("Hello");
-        assertThat(outputTopic.readValue(), equalTo("Hello"));
+        assertThat(outputTopic.readValue()).isEqualTo("Hello");
         //No more output in topic
-        assertThat(outputTopic.isEmpty(), is(true));
+        assertThat(outputTopic.isEmpty()).isTrue();
 
     }
 
@@ -80,8 +77,7 @@ public class SimpleStreamAppTest {
         //Feed list of words to inputTopic and no kafka key, timestamp is irrelevant in this case
         inputTopic.pipeValueList(inputList);
         List<String> output = outputTopic.readValuesToList();
-        assertThat(output, hasItems("This", "is", "an", "example"));
-        assertThat(output.size(), equalTo(inputList.size()));
+        assertThat(output).hasSameElementsAs(inputList);
     }
 
 }
