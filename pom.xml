@@ -101,7 +101,6 @@
                     <target>${java.version}</target>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
-                        <!--TODO: enable this once we have warnings under control<arg>-Werror</arg>-->
                     </compilerArgs>
                 </configuration>
             </plugin>
