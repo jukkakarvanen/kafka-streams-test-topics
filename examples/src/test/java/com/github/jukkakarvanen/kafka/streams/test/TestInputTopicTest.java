@@ -15,10 +15,6 @@
  */
 package com.github.jukkakarvanen.kafka.streams.test;
 
-import com.github.jukkakarvanen.kafka.streams.test.TestInputTopic;
-import com.github.jukkakarvanen.kafka.streams.test.TestOutputTopic;
-import com.github.jukkakarvanen.kafka.streams.test.TestRecord;
-import com.github.jukkakarvanen.kafka.streams.test.TopologyTestDriver;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;

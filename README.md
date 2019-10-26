@@ -1,30 +1,35 @@
 # Usability enhancement for Kafka Streams testing - kafka-streams-test-topics
 
-The stream application code is very compact and the test code is a lot of bigger code base than actual implementation of the 
-application, that's why it would be good to get test code easily readable and  understandable that way maintainable.
+TopologyTestDriver is a good test class providing possibility to test Kafka stream logic.
+This is a lot of faster than utilizing EmbeddedSingleNodeKafkaCluster
+The Kafka stream application code is very compact and the test code is easily a lot of bigger code base
+ than actual implementation of the application. That's why it would be good to get test code easily readable and 
+ understandable that way longer term also maintainable.
 
-TopologyTestDriver is good test class providing possibility to test Stream logic without starting EmbeddedKafka instance.
 
-When using TopologyTestDriver you need to call ConsumerRecordFactory to create ConsumerRecord passed into pipeInput method to write to topic. Also when calling readOutput to consume from topic, you need to provide correct Deserializers each time.
+In Kafka version 2.4.0 introduced with [KIP-470](https://cwiki.apache.org/confluence/display/KAFKA/KIP-470%3A+TopologyTestDriver+test+input+and+output+usability+improvements) 
+TestInputTopic and TestOutputTopic classes to simplify the usage of the test interface.
+When using TopologyTestDriver prior version 2.4.0 you needed to call ConsumerRecordFactory to produce ConsumerRecord passed
+into pipeInput method to write to topic. 
+Also when calling readOutput to consume from topic, you needed to provide correct Deserializers each time. ProducerRecord
+returned by readOutput contained a lot of extra fields set by Kafka internally which made the validating the records
+more complicated.
 
 You easily end up writing helper methods in your test classes, but this can be avoided when adding generic input and output topic classes wrapping existing functionality.
 
 TestInputTopic class wraps TopologyTestDriver  and ConsumerRecordFactory methods as one class to be used to write to Input Topics 
 and TestOutputTopic class collects TopologyTestDriver reading methods and provide typesafe read methods.
 
-These classes are proposed as improvements to main Apache Kafka project kafka-streams-test-utils package. 
- [KIP-470](https://cwiki.apache.org/confluence/display/KAFKA/KIP-470%3A+TopologyTestDriver+test+input+and+output+usability+improvements)
- [KAFKA-8233](https://issues.apache.org/jira/browse/KAFKA-8233)
- 
- This project is class level compatible package for the planned classes, only different package name.
- The kafka-streams-test-topics project has kafka-streams-test-utils as compile time dependency only and
- you need to include that as your own dependency to your project.
- 
- This way even the project is compiled using Kafka 2.2.0. You can use this also with any version of Kafka 2.0.0 and later.
+This project is class level compatible package for these classes, only different package name.
+The kafka-streams-test-topics project has kafka-streams-test-utils as compile time dependency only and
+you need to include that as your own dependency to your project.
+This way even the project is compiled using Kafka 2.3.0. You can use this also with any version of Kafka 2.0.0 and later.
 
 # Documentation        
 
-See [JavaDoc](https://jukkakarvanen.github.io/kafka-streams-test-topics/)
+The instruction of different test scenarions can be found from [README](examples/README.md) of [examples](examples/) application forder.     
+
+See also [JavaDoc](https://jukkakarvanen.github.io/kafka-streams-test-topics/)
 
 ## Maven repository info
 https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-topics        
@@ -42,7 +47,7 @@ https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-t
         <dependency>
             <groupId>com.github.jukkakarvanen</groupId>
             <artifactId>kafka-streams-test-topics</artifactId>
-            <version>0.0.1-beta3</version>
+            <version>1.0.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -55,15 +60,18 @@ https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-t
 
 ## Simple Stream Test Examples
 * [SimpleTopicTest.java](src/test/java/com/github/jukkakarvanen/kafka/streams/test/SimpleTopicTest.java)
-* [SimpleStreamAppTest.java](examples/src/test/com/github/jukkakarvanen/kafka/streams/example/SimpleStreamAppTest.java)
+* [SimpleStreamAppTest.java](examples/src/test/java/com/github/jukkakarvanen/kafka/streams/example/SimpleStreamAppTest.java)
 
 ## Sample use of different methods
 * [TestInputTopicTest.java](src/test/java/com/github/jukkakarvanen/kafka/streams/test/TestInputTopicTest.java)
 * [TestOutputTopicTest.java](src/test/java/com/github/jukkakarvanen/kafka/streams/test/TestOutputTopicTest.java)
 
 
-## Example how to simplify code: 
+## Example how to simplify code 
 [New versions](https://github.com/jukkakarvanen/kafka-streams-examples/blob/InputOutputTopic/src/test/java/io/confluent/examples/streams/WordCountLambdaExampleTest.java)
 based on Confluent example and
-[Difference with original](https://github.com/jukkakarvanen/kafka-streams-examples/compare/5.2.1-post...jukkakarvanen:InputOutputTopic)
+[difference with original](https://github.com/jukkakarvanen/kafka-streams-examples/compare/5.2.1-post...jukkakarvanen:InputOutputTopic).
 .
+## License
+This project is licensed under [Apache License Version 2.0](LICENSE).
+This might contain snippets of code from original Apache Kafka project, copyright the original author or authors.
