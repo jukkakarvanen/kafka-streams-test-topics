@@ -7,7 +7,7 @@ and TestOutputTopic class collects TopologyTestDriver reading methods and provid
 
 
 This project is class level compatible package for these classes, only different package name.
-The kafka-streams-test-topics project has kafka-streams-test-utils as compile time dependency only and
+The kafka-streams-test-topics project has kafka-streams-test-utils as a compile time dependency only and
 you need to include that as your own dependency to your project.
 This way even the project is compiled using Kafka 2.3.0. You can use this also with any version of Kafka 2.0.0 and later.
 

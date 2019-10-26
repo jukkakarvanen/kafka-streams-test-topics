@@ -1,32 +1,33 @@
-# Testing Kafka Streams using TestInputTopic and TestOutputTopic
+# Testing Kafka Streams Using TestInputTopic and TestOutputTopic
 
 TopologyTestDriver is a good test class providing possibility to test Kafka stream logic.
-This is a lot of faster than utilizing EmbeddedSingleNodeKafkaCluster
-The Kafka stream application code is very compact and the test code is easily a lot of bigger code base
- than actual implementation of the application. That's why it would be good to get test code easily readable and 
- understandable that way longer term also maintainable.
+This is a lot faster than utilizing EmbeddedSingleNodeKafkaCluster.
+The Kafka stream application code is very compact and the test code is easily a lot bigger code base
+ than the actual implementation of the application. That is why it would be good to get the test code to be easily readable and 
+ understandable. This way the longer term is also more maintainable.
 
 
 In Kafka version 2.4.0 introduced with [KIP-470](https://cwiki.apache.org/confluence/display/KAFKA/KIP-470%3A+TopologyTestDriver+test+input+and+output+usability+improvements) 
 TestInputTopic and TestOutputTopic classes to simplify the usage of the test interface.
-When using TopologyTestDriver prior version 2.4.0 you needed to call ConsumerRecordFactory to produce ConsumerRecord passed
-into pipeInput method to write to topic. 
-Also when calling readOutput to consume from topic, you needed to provide correct Deserializers each time. ProducerRecord
-returned by readOutput contained a lot of extra fields set by Kafka internally which made the validating the records
+When using TopologyTestDriver prior version 2.4.0 the code needed to call ConsumerRecordFactory to produce ConsumerRecord passed
+into pipeInput method to write to the topic. 
+Also when calling readOutput to consume from the topic, the code needed to provide correct Deserializers each time. ProducerRecord
+returned by readOutput contained a lot of extra fields set by Kafka internally which made validating the records
 more complicated.
 
 
-There exist also [Fluent Kafka Streams Tests](https://medium.com/bakdata/fluent-kafka-streams-tests-e641785171ec) 
-wrapper around TopologyTestDriver, but I prefer using same assertion framework across all tests. Kafka Streams itself
+Additionally there exists a separate [Fluent Kafka Streams Tests](https://medium.com/bakdata/fluent-kafka-streams-tests-e641785171ec) 
+wrapper around TopologyTestDriver, but I prefer using the same assertion framework as with all the other tests. Kafka Streams itself
 is using [Hamcrest](http://hamcrest.org/JavaHamcrest/tutorial), but I like a [AssertJ](https://assertj.github.io/doc/)
-with it's ease of use what auto-completion in IDE is offering. This page provides examples how to write Kafka Streams test with AssertJ.  
+with it's ease of use what auto-completion in IDE is offering. 
+This page provides examples on how to write Kafka Streams test with AssertJ.  
 
 ## Setup
 
-The general info about testing can be found from [Kafka Streams - Developer Guide](https://kafka.apache.org/documentation/streams/developer-guide/testing.html).
-The first step in your test class is to prepare create TopologyTestDriver and related TestInputTopic and 
-TestOutputTopic. These TestInputTopic and TestOutputTopic are new since Kafka version 2.4.0. If you do not need to test 
-the record time you can create InputTopic without base time and advance information.
+General information about testing can be found in the [Kafka Streams - Developer Guide](https://kafka.apache.org/documentation/streams/developer-guide/testing.html).
+The first step in the test class is to create TopologyTestDriver and related TestInputTopic and 
+TestOutputTopic. These TestInputTopic and TestOutputTopic are new since Kafka version 2.4.0. If the test does not need to validate 
+the record time, it can create InputTopic without base time and advance information.
 
     private TopologyTestDriver testDriver;
     private TestInputTopic<Long, String> inputTopic;
@@ -46,12 +47,12 @@ the record time you can create InputTopic without base time and advance informat
         outputTopic = testDriver.createOutputTopic(MappingStreamApp.OUTPUT_TOPIC, new StringDeserializer(), new LongDeserializer());
     }
 
-## Testing one record at a time
+## Testing One Record at a Time
 ### Testing record value
 
-In this example the topology we are testing is swapping key as a value and value as a key. 
-That purpose we are piping the key and value, but there is a possibility to write only value.
-In this example we are asserting only the value, so we use readValue method for it. 
+In this example the stream that the code is testing, is swapping the key as a value and the value as a key. 
+For that purpose the code is piping the key and the value, but there is a possibility to write only the value.
+In this example the test is asserting only the value, so it uses readValue method for it. 
 
     @Test
     public void testOnlyValue() {
@@ -63,10 +64,10 @@ In this example we are asserting only the value, so we use readValue method for 
         assertThat(outputTopic.isEmpty()).isTrue();
     }
 
-At the end of the test isEmpty is assuring the are no more messages in the topic. Earlier before 2.4.0 version you 
-read the record and validated the returned record was null. Now if you read from empty topic, it is generating exception. 
-That way you validate wirh readValue also if you are expecting get null value.
-Also now the reading from non-existing topic is causing exception instead of null value as earlier.
+At the end of the test isEmpty is assuring that there are no more messages in the topic. Earlier, before 2.4.0 version, the code 
+read the record and the validated returned record was null. Now, if the test reads from empty topic, it is generating exception. 
+That way the test can validate with readValue as well, if it is expecting to get the null value.
+Additionally, now the reading from non-existing topic is causing exception instead of the null value, as it did before.
 
     @Test
     public void testReadFromEmptyTopic() {
@@ -77,7 +78,7 @@ Also now the reading from non-existing topic is causing exception instead of nul
 
 ### Testing KeyValue
 
-If you need to validate both key and value you can use readKeyValue and assert it against KeyValue.
+If the test needs to validate both the key and the value, it can use readKeyValue and assert it against the KeyValue.
 
     @Test
     public void testKeyValue() {
@@ -91,8 +92,8 @@ If you need to validate both key and value you can use readKeyValue and assert i
 
 ### Testing with TestRecord
 
-If you need to validate also record time, you can use readRecord and assert it against TestRecord. TestRecord
-contructors support both Instant or old way with long timestamps.
+If the test also needs to validate record time, it can use readRecord, and assert it against TestRecord. The TestRecord
+contructors support both Instant and the old way with long timestamps.
 
     @Test
     public void testKeyValueTimestamp() {
@@ -105,10 +106,10 @@ contructors support both Instant or old way with long timestamps.
         assertThat(outputTopic.isEmpty()).isTrue();
     }
 
-### Testing with TestRecord ignoring timestamp
+### Testing with TestRecord Ignoring Timestamp
 
-If yoy need to validate also record header, but do not care about timestamp AssertJ isEqualToIgnoringNullFields is useful.
-This way actual record timestamp can be ignored. Hamcrest has also possibility to implement partial test with allOf 
+If the test needs to validate record header as well, but does not care about timestamp, AssertJ isEqualToIgnoringNullFields is useful.
+This way the actual record timestamp can be ignored. Hamcrest also has a possibility to implement partial test with allOf 
 and hasProperty matchers. 
 
     @Test
@@ -124,13 +125,13 @@ and hasProperty matchers.
         assertThat(outputTopic.isEmpty()).isTrue();
     }
 
-## Testing collection of records
+## Testing Collection of Records
 
-### Testing with ValueList and KeyValueList
+### Testing with Value and KeyValue List
 
-Similarly than single record you can pipe in Value list and you can validate output with single record methods as earlier
-or us reaValueToList method and seeing the big picture when validating the whole collection at the same time. 
-In this case when we piped in values, we need to validate keys and that way of readKeyValueToList method. 
+Similarly, as single record, the test can pipe in Value list and validate output with single record methods, like before,
+or use readValueToList method and see the big picture when validating the whole collection at the same time. 
+In this case, when the test pipes in the values, it needs to validate the keys and that way use readKeyValueToList method. 
 
     @Test
     public void testKeyValueList() {
@@ -145,10 +146,10 @@ In this case when we piped in values, we need to validate keys and that way of r
         assertThat(outputTopic.readKeyValuesToList()).hasSameElementsAs(expected);
     }
 
-### Testing with ValueList and with auto advanced record time
+### Testing with Value List and with Auto Advanced Record Time
 
-This test is writing KeyValue list and as we have created OutputTopic with base time and auto-advance each
-TestRecord has new time value.
+This test is writing the KeyValue list, and as it has created OutputTopic with base time and auto-advance, each
+TestRecord has a new time value.
 
     @Test
     public void testRecordList() {
@@ -169,12 +170,12 @@ TestRecord has new time value.
         assertThat(outputTopic.readRecordsToList()).hasSameElementsAs(expected);
     }
 
-### Testing reading KeyValues to Map
+### Testing Reading KeyValues to Map
 
-If you are testing stream where only the latest record of same key is valid like aggregation, you can use 
+If the test is validating stream where only the latest record of the same key is valid, like aggregation, it can use 
 readKeyValuesToMap and validate it.
-The difference with Kafka KTable is that when tombstone (record with null value) is removing the whole key, this map still 
-contains keys with null value.
+The difference with Kafka KTable is that when tombstone (record with the null value) is removing the whole key, this map still 
+contains keys with the null value.
 
     @Test
     public void testValueMap() {
@@ -193,17 +194,19 @@ contains keys with null value.
                 .containsEntry("c", 3L);
     }
 
+The full example code can be found [here](src/test/java/com/github/jukkakarvanen/kafka/streams/example/MappingStreamAppTest.java).
+
 ## Migration
 
 If you are migrating existing TopologyTestDriver test, you can get far with a simple find and replace approach.
-The time handling is modified to use Instant and Duration classes, but there are possibility to use long timestamp with TestRecord. 
-You can find a lot of examples of modified test from Apache Kafka github in the diff of 
-[commit in KIP-470](https://github.com/apache/kafka/commit/a5a6938c69f4310f7ec519036f0df77d8022326a)   
+The time handling is modified to use the Instant and Duration classes, but there is a possibility to use long timestamp with TestRecord. 
+You can find a lot of examples of modified tests from Apache Kafka github in the diff of 
+[commit in KIP-470](https://github.com/apache/kafka/commit/a5a6938c69f4310f7ec519036f0df77d8022326a).   
 
-If you want to use this topic classes with older Kafka version there are separate package which can be
-used with older Kafka version only modifing the package import. See more info: https://github.com/jukkakarvanen/kafka-streams-test-topics 
+If you want to use these topic classes with older Kafka versions, there is a separate package which can be
+used with older versions by modifying only the package import. See more info: https://github.com/jukkakarvanen/kafka-streams-test-topics 
 
-## Testing examples in Kafka Github:
+## Testing Examples in Kafka Github:
 
 * [WordCountDemoTest.java](https://github.com/apache/kafka/blob/trunk/streams/examples/src/test/java/org/apache/kafka/streams/examples/wordcount/WordCountDemoTest.java) 
 * [TestTopicsTest.java](https://github.com/apache/kafka/blob/trunk/streams/test-utils/src/test/java/org/apache/kafka/streams/TestTopicsTest.java) 
