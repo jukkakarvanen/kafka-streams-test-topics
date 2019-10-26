@@ -193,6 +193,7 @@ contains keys with null value.
                 .containsEntry("c", 3L);
     }
 
+## Migration
 
 If you are migrating existing TopologyTestDriver test, you can get far with a simple find and replace approach.
 The time handling is modified to use Instant and Duration classes, but there are possibility to use long timestamp with TestRecord. 
@@ -200,10 +201,11 @@ You can find a lot of examples of modified test from Apache Kafka github in the 
 [commit in KIP-470](https://github.com/apache/kafka/commit/a5a6938c69f4310f7ec519036f0df77d8022326a)   
 
 If you want to use this topic classes with older Kafka version there are separate package which can be
-used with older Kafka version only modifing the package import. See more info: (https://github.com/jukkakarvanen/kafka-streams-test-topics) 
+used with older Kafka version only modifing the package import. See more info: https://github.com/jukkakarvanen/kafka-streams-test-topics 
 
-Happy testing.
+## Testing examples in Kafka Github:
 
-Testing examples in Kafka Github:
 * [WordCountDemoTest.java](https://github.com/apache/kafka/blob/trunk/streams/examples/src/test/java/org/apache/kafka/streams/examples/wordcount/WordCountDemoTest.java) 
 * [TestTopicsTest.java](https://github.com/apache/kafka/blob/trunk/streams/test-utils/src/test/java/org/apache/kafka/streams/TestTopicsTest.java) 
+
+Happy testing.

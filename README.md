@@ -1,29 +1,16 @@
 # Usability enhancement for Kafka Streams testing - kafka-streams-test-topics
 
-TopologyTestDriver is a good test class providing possibility to test Kafka stream logic.
-This is a lot of faster than utilizing EmbeddedSingleNodeKafkaCluster
-The Kafka stream application code is very compact and the test code is easily a lot of bigger code base
- than actual implementation of the application. That's why it would be good to get test code easily readable and 
- understandable that way longer term also maintainable.
-
-
-In Kafka version 2.4.0 introduced with [KIP-470](https://cwiki.apache.org/confluence/display/KAFKA/KIP-470%3A+TopologyTestDriver+test+input+and+output+usability+improvements) 
-TestInputTopic and TestOutputTopic classes to simplify the usage of the test interface.
-When using TopologyTestDriver prior version 2.4.0 you needed to call ConsumerRecordFactory to produce ConsumerRecord passed
-into pipeInput method to write to topic. 
-Also when calling readOutput to consume from topic, you needed to provide correct Deserializers each time. ProducerRecord
-returned by readOutput contained a lot of extra fields set by Kafka internally which made the validating the records
-more complicated.
-
-You easily end up writing helper methods in your test classes, but this can be avoided when adding generic input and output topic classes wrapping existing functionality.
-
+Kafka version 2.4.0 introduced TestInputTopic and TestOutputTopic classes with [KIP-470](https://cwiki.apache.org/confluence/display/KAFKA/KIP-470%3A+TopologyTestDriver+test+input+and+output+usability+improvements) 
+to simplify the usage of the TopologyTestDriver interface. 
 TestInputTopic class wraps TopologyTestDriver  and ConsumerRecordFactory methods as one class to be used to write to Input Topics 
 and TestOutputTopic class collects TopologyTestDriver reading methods and provide typesafe read methods.
+
 
 This project is class level compatible package for these classes, only different package name.
 The kafka-streams-test-topics project has kafka-streams-test-utils as compile time dependency only and
 you need to include that as your own dependency to your project.
 This way even the project is compiled using Kafka 2.3.0. You can use this also with any version of Kafka 2.0.0 and later.
+
 
 # Documentation        
 
