@@ -87,3 +87,7 @@ based on Confluent example and
 ## License
 This project is licensed under [Apache License Version 2.0](LICENSE).
 This might contain snippets of code from original Apache Kafka project, copyright the original author or authors.
+
+## Author 
+
+Questions and feedback jukka@jukinimi.com 
