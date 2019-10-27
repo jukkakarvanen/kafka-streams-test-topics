@@ -14,12 +14,16 @@ This way even the project is compiled using Kafka 2.3.0. You can use this also w
 
 # Documentation        
 
-The instruction of different test scenarions can be found from [README](examples/README.md) of [examples](examples/) application forder.     
+The tutorial and the instruction of different test scenarions can be found from
+https://github.com/jukkakarvanen/kafka-streams-test-tutorial
+The tutorial is compatible with this packages and [examples](examples/) application forder.     
 
 See also [JavaDoc](https://jukkakarvanen.github.io/kafka-streams-test-topics/)
 
 ## Maven repository info
-https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-topics        
+
+* https://search.maven.org/artifact/com.github.jukkakarvanen/kafka-streams-test-topics/1.0.0/jar
+* https://mvnrepository.com/artifact/com.github.jukkakarvanen/kafka-streams-test-topics        
 
 ## Dependency in pom.xml
 
