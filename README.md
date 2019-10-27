@@ -90,4 +90,6 @@ This might contain snippets of code from original Apache Kafka project, copyrigh
 
 ## Author 
 
-Questions and feedback jukka@jukinimi.com 
+Jukka Karvanen / jukka@jukinimi.com
+
+Questions and feedback welcome. 
