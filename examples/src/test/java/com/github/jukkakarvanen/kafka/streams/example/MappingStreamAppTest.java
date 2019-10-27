@@ -89,11 +89,12 @@ public class MappingStreamAppTest {
 
     @Test
     public void testReadFromEmptyTopic() {
+        inputTopic.pipeInput(9L, "Hello");
+        assertThat(outputTopic.readValue()).isEqualTo(9L);
         //Reading from empty topic generate Exception
         assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> {
             outputTopic.readValue();
-        })
-                .withMessage("Empty topic: %s", MappingStreamApp.OUTPUT_TOPIC);
+        }).withMessage("Empty topic: %s", MappingStreamApp.OUTPUT_TOPIC);
     }
 
     @Test
